@@ -1,4 +1,4 @@
 /train_data
 venv
 *.py[cod]
-
+*.dat
