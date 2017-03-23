@@ -68,7 +68,7 @@ class FeatureExtractor:
         hog_features = FeatureExtractor._get_hog_features(img, orient, pix_per_cell, cell_per_block)
         color_hist_features = FeatureExtractor._get_color_hist_features(img)
         bin_spatial_features = FeatureExtractor._get_bin_spatial_features(img)
-        # combine and normalize features
+        # combine features
         return np.concatenate((hog_features, color_hist_features, bin_spatial_features))
 
     @staticmethod
