@@ -49,12 +49,14 @@ class DetectVehicles:
         Uses multi-scale window search to detect cars in a frame
         """
         # image here is in BGR space and that causes the classifer to fail since it is trained
-        # against YUV space images.
+        # against YUV space images. This could definitely be optimized.
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         out_img = self.per_frame_car_detector.find_cars_in_windows_scaled(
             img=img, cspace='YUV', spatial_size=(32, 32), hist_bins=32, orient=9, pix_per_cell=8,
             cell_per_block=2
         )
+        # back to BGR
+        out_img = cv2.cvtColor(out_img, cv2.COLOR_RGB2BGR)
         self._try_write_image(img, out_img)
         return out_img
 
