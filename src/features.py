@@ -4,6 +4,10 @@ from sklearn.preprocessing import StandardScaler
 from skimage.feature import hog
 
 
+def print_feature_info(feature_name, features):
+    print feature_name, len(features), type(features) #, features.shape
+
+
 class HogFeaturesExtractor:
     """
     Per image hog feature extraction.
@@ -14,7 +18,7 @@ class HogFeaturesExtractor:
         self.hog_ch2 = None
         self.hog_ch3 = None
 
-    def run_hog_extraction(self, orient, pix_per_cell=8, cell_per_block=2, feature_vec=True):
+    def run_hog_extraction(self, orient=9, pix_per_cell=8, cell_per_block=2, feature_vec=True):
         """
         Runs hog feature extraction on the entire image
         """
@@ -37,15 +41,15 @@ class HogFeaturesExtractor:
         """
         return np.hstack((self.hog_ch1.ravel(), self.hog_ch2.ravel(), self.hog_ch3.ravel()))
 
-    def get_partial_hog_feature(self, top_left, bottom_right):
+    def get_partial_hog_feature(self, ys, xs):
         """
         Flattened hog features of part of the image as defined by the top_left and bottom_right
         corner points of the sub-image
         """
         return np.hstack((
-            self.hog_ch1[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]].ravel(),
-            self.hog_ch2[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]].ravel(),
-            self.hog_ch3[top_left[1]:bottom_right[1], top_left[0]:bottom_right[0]].ravel()
+            self.hog_ch1[ys[0]:ys[1], xs[0]:xs[1]].ravel(),
+            self.hog_ch2[ys[0]:ys[1], xs[0]:xs[1]].ravel(),
+            self.hog_ch3[ys[0]:ys[1], xs[0]:xs[1]].ravel()
         ))
 
 
@@ -55,8 +59,13 @@ class FeatureExtractor:
     """
 
     @staticmethod
-    def extract_features(img):
-        pass
+    def extract_features_for_img(img, cspace='RGB', orient=9, pix_per_cell=8, cell_per_block=2):
+        img = FeatureExtractor.adjust_img_color_space(img, cspace=cspace)
+        hog_features = FeatureExtractor.get_hog_features(img, orient, pix_per_cell, cell_per_block)
+        color_hist_features = FeatureExtractor.get_color_hist_features(img)
+        bin_spatial_features = FeatureExtractor.get_bin_spatial_features(img)
+        # combine features
+        return np.concatenate((hog_features, color_hist_features, bin_spatial_features))
 
     @staticmethod
     def get_bin_spatial_features(img, size=(32, 32)):
@@ -104,12 +113,10 @@ class FeatureExtractor:
     @staticmethod
     def extract_features(img_path, cspace='RGB', orient=9, pix_per_cell=8, cell_per_block=2):
         img = cv2.imread(img_path)
-        img = FeatureExtractor.adjust_img_color_space(img, cspace=cspace)
-        hog_features = FeatureExtractor.get_hog_features(img, orient, pix_per_cell, cell_per_block)
-        color_hist_features = FeatureExtractor.get_color_hist_features(img)
-        bin_spatial_features = FeatureExtractor.get_bin_spatial_features(img)
-        # combine features
-        return np.concatenate((hog_features, color_hist_features, bin_spatial_features))
+        return FeatureExtractor.extract_features_for_img(
+            img=img, cspace=cspace, orient=orient, pix_per_cell=pix_per_cell,
+            cell_per_block=cell_per_block
+        )
 
     @staticmethod
     def extract_features_for_multiple_images(
@@ -132,7 +139,7 @@ if __name__ == '__main__':
     features = FeatureExtractor.extract_features(
         img_path='./train_data/vehicles/GTI_MiddleClose/image0476.png'
     )
-    print len(features), features
+    print len(features), type(features), features
 
     # multiple images
     img_paths=[
@@ -140,4 +147,4 @@ if __name__ == '__main__':
         './train_data/vehicles/GTI_MiddleClose/image0475.png'
     ]
     features = FeatureExtractor.extract_features_for_multiple_images(img_paths=img_paths)
-    print len(features), features
+    print len(features), type(features), features

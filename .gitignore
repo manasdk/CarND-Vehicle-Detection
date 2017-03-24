@@ -1,4 +1,7 @@
+# training data
 /train_data
+# intermediate output to debug video processing
+/video_output_images
 venv
 *.py[cod]
 *.dat

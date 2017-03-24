@@ -8,7 +8,7 @@ from sklearn.svm import LinearSVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
 
-from features import FeatureExtractor
+from features import FeatureExtractor, print_feature_info
 
 MODULE_DIR = os.path.dirname(__file__)
 SAVED_CLASSIFIER_DATA = os.path.join(MODULE_DIR, 'classifier.dat')
@@ -17,14 +17,14 @@ SAVED_CLASSIFIER_DATA = os.path.join(MODULE_DIR, 'classifier.dat')
 class ClassifierTrainer:
 
     def __init__(self):
-        self.classifier, self.is_trained = ClassifierTrainer.load_classifier()
+        self.classifier, self.is_trained, self.feature_scaler = ClassifierTrainer.load_classifier()
 
     def train_classifier(self):
         """
         Train the vehicle identificaton classifier using vehicle and non-vehicle
         training data
         """
-        features, labels = ClassifierTrainer._get_training_data()
+        features, labels = self._get_training_data()
         # create train and test sets
         rand_state = np.random.randint(0, 100)
         features_train, features_test, labels_train, labels_test = train_test_split(
@@ -51,41 +51,45 @@ class ClassifierTrainer:
         if not self.is_trained:
             raise Exception('cannot save untrained classifier')
         with open(classifier_path, 'wb') as classifier_out:
-            cPickle.dump(self.classifier, classifier_out)
+            data = {'classifier': self.classifier, 'feature_scaler': self.feature_scaler}
+            cPickle.dump(data, classifier_out)
 
     @staticmethod
     def load_classifier(classifier_path=SAVED_CLASSIFIER_DATA):
         if not os.path.exists(classifier_path):
-            return LinearSVC(), False
+            return LinearSVC(), False, None
         print('loading saved classifier')
         with open(classifier_path, 'rb') as classifier_out:
-            return cPickle.load(classifier_out), True
+            data = cPickle.load(classifier_out)
+            return data['classifier'], True, data['feature_scaler']
 
-    @staticmethod
-    def _get_training_data():
-
+    def _get_training_data(self):
         print('Extracting vehicle features ...')
         t = time.time()
         vehicle_features = FeatureExtractor.extract_features_for_multiple_images(
-            ClassifierTrainer._get_vehicle_img_paths()
+            ClassifierTrainer._get_vehicle_img_paths(), cspace='YUV'
         )
         t2 = time.time()
         print round(t2-t, 2), 'Seconds to extract vehicle features'
+        print_feature_info("vehicle_features", vehicle_features)
 
         print('Extracting non-vehicle features ...')
         t = time.time()
         non_vehicle_features = FeatureExtractor.extract_features_for_multiple_images(
-            ClassifierTrainer._get_non_vehicle_img_paths()
+            ClassifierTrainer._get_non_vehicle_img_paths(), cspace='YUV'
         )
         t2 = time.time()
         print round(t2-t, 2), 'Seconds to extract non-vehicle features'
+        print_feature_info("non_vehicle_features", non_vehicle_features)
 
         # combine an scale the vehicle and non-vehicle features
         combined = np.vstack((vehicle_features, non_vehicle_features)).astype(np.float64)
+        print_feature_info("combined", combined)
         # Fit a per-column scaler
-        feature_scaler = StandardScaler().fit(combined)
+        if not self.feature_scaler:
+            self.feature_scaler = StandardScaler().fit(combined)
         # Apply the scaler to X
-        features = feature_scaler.transform(combined)
+        features = self.feature_scaler.transform(combined)
 
         # Define the labels vector
         labels = np.hstack(
