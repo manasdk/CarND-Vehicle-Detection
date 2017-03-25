@@ -28,7 +28,7 @@ class SubSampleWindowSearch:
         draw_img = np.copy(img)
 
         img_tosearch = img[ystart:ystop,:,:]
-        ctrans_tosearch = FeatureExtractor.adjust_img_cspace(img_tosearch, cspace='YUV')
+        ctrans_tosearch = FeatureExtractor.adjust_img_color_space(img_tosearch, cspace='YUV')
 
         # Define blocks and steps as above
         nxblocks = (ctrans_tosearch.shape[1] // pix_per_cell)-1
@@ -70,19 +70,17 @@ class SubSampleWindowSearch:
                 # print_feature_info("spatial_features", spatial_features)
 
                 # Get histogram features
-                # hist_features = FeatureExtractor.get_color_hist_features(
-                #     subimg, nbins=hist_bins
-                # )
+                hist_features = FeatureExtractor.get_color_hist_features(
+                    subimg, nbins=hist_bins
+                )
                 # print_feature_info("hist_features", hist_features)
 
                 # Scale features and make a prediction
-                # test_features = np.hstack((hog_features, hist_features, spatial_features))
-                test_features = np.hstack((hog_features, spatial_features))
+                test_features = np.hstack((hog_features, hist_features, spatial_features))
                 test_features = self.feature_scaler.transform(test_features)
                 test_prediction = self.classifier.predict(test_features)
 
                 if test_prediction == 1:
-                    print "Eureka!"
                     xbox_left = np.int(xleft)
                     ytop_draw = np.int(ytop)
                     win_draw = np.int(window)
@@ -249,10 +247,9 @@ def do_window_search_2(rel_in_path, rel_out_path):
 
 
 if __name__ == '__main__':
-    # do_window_search_2('../test_images/test1.jpg', '../output_images/test1_heat2.jpg')
-    # do_window_search_2('../test_images/test2.jpg', '../output_images/test2_heat2.jpg')
-    # do_window_search_2('../test_images/test3.jpg', '../output_images/test3_heat2.jpg')
-    # do_window_search_2('../test_images/test4.jpg', '../output_images/test4_heat2.jpg')
-    # do_window_search_2('../test_images/test5.jpg', '../output_images/test5_heat2.jpg')
-    # do_window_search_2('../test_images/test6.jpg', '../output_images/test6_heat2.jpg')
-    do_window_search_2('../video_output_images/f1_ip.jpg', '../video_output_images/f1_ip_heat.jpg')
+    do_window_search_2('../test_images/test1.jpg', '../output_images/test1_heat2.jpg')
+    do_window_search_2('../test_images/test2.jpg', '../output_images/test2_heat2.jpg')
+    do_window_search_2('../test_images/test3.jpg', '../output_images/test3_heat2.jpg')
+    do_window_search_2('../test_images/test4.jpg', '../output_images/test4_heat2.jpg')
+    do_window_search_2('../test_images/test5.jpg', '../output_images/test5_heat2.jpg')
+    do_window_search_2('../test_images/test6.jpg', '../output_images/test6_heat2.jpg')

@@ -22,7 +22,7 @@ class DetectVehicles:
         self.per_frame_car_detector = SubSampleWindowSearch()
         self.input_video_path = input_video_path
         self.output_video_path = output_video_path
-        self.frame_write_percentage = 10
+        self.frame_write_percentage = 0
         self.write_idx = 0
 
     def run(self):
@@ -39,10 +39,13 @@ class DetectVehicles:
         """
         Uses hog sub-sampling window search to detect cars in a frame.
         """
-        return self.per_frame_car_detector.find_cars(
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        out_img = self.per_frame_car_detector.find_cars(
             img=img, ystart=400, ystop=656, orient=9, pix_per_cell=8, cell_per_block=2,
             spatial_size=(32, 32), hist_bins=32
         )
+        out_img = cv2.cvtColor(out_img, cv2.COLOR_RGB2BGR)
+        return out_img
 
     def _process_frame_2(self, img):
         """
